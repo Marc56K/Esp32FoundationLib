@@ -23,10 +23,18 @@ public:
     void Save();
     bool IsModified();
 
+    int32_t GetKeyId(const String& key) const;
+
     void Set(const String& key, const String& value);
+    bool Set(const int32_t keyId, const String& value);
+
     bool IsSet(const String& key) const;
-    String Get(const String& key) const;    
-    const std::map<String, String>& GetEntries() const;
+    bool IsSet(const int32_t keyId) const;
+
+    String Get(const String& key) const;
+    String Get(const int32_t keyId) const;
+
+    const std::map<String, String> GetEntries() const;
     void PrintEntries(HardwareSerial& serial = Serial) const;
 
 private:
@@ -36,5 +44,7 @@ private:
     EEPROMClass& _eeprom;
     uint32_t _eepromSize;
     bool _isModified;
-    std::map<String, String> _entries;
+    int32_t _maxKeyId;
+    std::map<String, int32_t> _keys;
+    std::map<int32_t, String> _values;
 };

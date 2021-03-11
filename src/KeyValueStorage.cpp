@@ -8,7 +8,8 @@ KeyValueStorage::KeyValueStorage(
     const uint32_t eepromSize)
     : _eeprom(eeprom),
       _eepromSize(max<uint32_t>(sizeof(StorageHeader), eepromSize)),
-      _isModified(false)
+      _isModified(false),
+      _maxKeyId(-1)
 {
 }
 
@@ -18,8 +19,9 @@ KeyValueStorage::~KeyValueStorage()
 
 uint32_t KeyValueStorage::Load()
 {
-    _isModified = false;
-    _entries.clear();
+    _maxKeyId = -1;
+    _values.clear();
+    _keys.clear();
 
     std::vector<uint8_t> buffer(_eepromSize);
     if (_eeprom.begin(_eepromSize))
@@ -43,12 +45,14 @@ uint32_t KeyValueStorage::Load()
 
             if (key.length() > 0 && value.length() > 0)
             {
-                _entries[key] = value;
+                Set(key, value);
             }
         }
     }
 
-    return _entries.size();
+    _isModified = false;
+
+    return _values.size();
 }
 
 void KeyValueStorage::Save()
@@ -58,14 +62,15 @@ void KeyValueStorage::Save()
         _isModified = false;
 
         StorageHeader* header = (StorageHeader*)_eeprom.getDataPtr();
-        header->numEntries = (uint32_t)_entries.size();
+        header->numEntries = (uint32_t)_values.size();
         uint32_t pos = sizeof(StorageHeader);
-        for (auto& entry : _entries)
+        for (auto& key : _keys)
         {
-            _eeprom.writeString(pos, entry.first);
-            pos += entry.first.length() + 1;
-            _eeprom.writeString(pos, entry.second);
-            pos += entry.second.length() + 1;
+            _eeprom.writeString(pos, key.first);
+            pos += key.first.length() + 1;
+            const String& value = _values.at(key.second);
+            _eeprom.writeString(pos, value);
+            pos += value.length() + 1;
         }
         header->hash = ComputeHash(_eeprom.getDataPtr());
         _eeprom.commit();
@@ -78,54 +83,94 @@ bool KeyValueStorage::IsModified()
     return _isModified;
 }
 
+int32_t KeyValueStorage::GetKeyId(const String& key) const
+{
+    auto it = _keys.find(key);
+    if (it != _keys.end())
+    {
+        return it->second;
+    }
+    return -1;
+}
+
 void KeyValueStorage::Set(const String &key, const String &value)
 {
-    auto it = _entries.find(key);
-    if (it != _entries.end())
+    auto it = _keys.find(key);
+    if (it != _keys.end())
     {
-        if (value.isEmpty())
+        const int32_t keyId = it->second;
+        const String& oldValue = _values[keyId];
+        if (value != oldValue)
         {
-            _entries.erase(it);
-            _isModified = true;
-        }
-        else if (it->second != value)
-        {
-            _entries[key] = value;
+            _values[keyId] = value;
             _isModified = true;
         }
     }
-    else if (!value.isEmpty())
+    else
     {
-        _entries[key] = value;
+        _maxKeyId++;
+        _keys[key] = _maxKeyId;
+        _values[_maxKeyId] = value;
         _isModified = true;
     }
 }
 
+bool KeyValueStorage::Set(const int32_t keyId, const String& value)
+{
+    auto it = _values.find(keyId);
+    if (it != _values.end())
+    {
+        if (it->second != value)
+        {
+            _values[keyId] = value;
+            _isModified = true;
+        }
+        return true;
+    }
+    return false;
+}
+
 bool KeyValueStorage::IsSet(const String &key) const
 {
-    return _entries.find(key) != _entries.end();
+    return _keys.find(key) != _keys.end();
+}
+
+bool KeyValueStorage::IsSet(const int32_t keyId) const
+{
+    return _values.find(keyId) != _values.end();
 }
 
 String KeyValueStorage::Get(const String &key) const
 {
-    auto it = _entries.find(key);
-    if (it != _entries.end())
+    return Get(GetKeyId(key));
+}
+
+String KeyValueStorage::Get(const int32_t keyId) const
+{
+    auto it = _values.find(keyId);
+    if (it != _values.end())
     {
         return it->second;
     }
     return "";
 }
 
-const std::map<String, String> &KeyValueStorage::GetEntries() const
+
+const std::map<String, String> KeyValueStorage::GetEntries() const
 {
-    return _entries;
+    std::map<String, String> result;
+    for (auto key : _keys)
+    {
+        result[key.first] = _values.at(key.second);
+    }
+    return result;
 }
 
 void KeyValueStorage::PrintEntries(HardwareSerial& serial) const
 {
-    for (auto entry : _entries)
+    for (auto key : _keys)
     {
-        serial.println(entry.first + "=" + entry.second);
+        serial.println(key.first + "=" + _values.at(key.second));
     }
 }
 
