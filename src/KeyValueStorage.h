@@ -14,7 +14,7 @@ private:
 
 public:
     KeyValueStorage(
-        EEPROMClass& eeprom = EEPROM,
+        EEPROMClass &eeprom = EEPROM,
         const uint32_t eepromSize = 512);
 
     ~KeyValueStorage();
@@ -23,25 +23,25 @@ public:
     void Save();
     bool IsModified();
 
-    int32_t GetKeyId(const String& key) const;
+    int32_t GetKeyId(const String &key) const;
 
-    void Set(const String& key, const String& value);
-    bool Set(const int32_t keyId, const String& value);
+    void Set(const String &key, const String &value);
+    bool Set(const int32_t keyId, const String &value);
 
-    bool IsSet(const String& key) const;
+    bool IsSet(const String &key) const;
     bool IsSet(const int32_t keyId) const;
 
-    String Get(const String& key) const;
+    String Get(const String &key) const;
     String Get(const int32_t keyId) const;
 
     const std::map<String, String> GetEntries() const;
-    void PrintEntries(HardwareSerial& serial = Serial) const;
+    void PrintEntries(HardwareSerial &serial = Serial) const;
 
 private:
-    uint32_t ComputeHash(const void* storage) const;
+    uint32_t ComputeHash(const void *storage) const;
 
 private:
-    EEPROMClass& _eeprom;
+    EEPROMClass &_eeprom;
     uint32_t _eepromSize;
     bool _isModified;
     int32_t _maxKeyId;

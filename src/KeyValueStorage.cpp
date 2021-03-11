@@ -30,17 +30,17 @@ uint32_t KeyValueStorage::Load()
         _eeprom.end();
     }
     uint8_t *ptr = buffer.data();
-    StorageHeader* header = (StorageHeader*)ptr;
-    const uint32_t actualHash = ComputeHash( buffer.data());
+    StorageHeader *header = (StorageHeader *)ptr;
+    const uint32_t actualHash = ComputeHash(buffer.data());
     if (header->hash == actualHash)
     {
         ptr += sizeof(StorageHeader);
         for (uint32_t i = 0; i < header->numEntries; i++)
         {
-            const String key = (char*)ptr;
+            const String key = (char *)ptr;
             ptr += key.length() + 1;
 
-            const String value = (char*)ptr;
+            const String value = (char *)ptr;
             ptr += value.length() + 1;
 
             if (key.length() > 0 && value.length() > 0)
@@ -61,14 +61,14 @@ void KeyValueStorage::Save()
     {
         _isModified = false;
 
-        StorageHeader* header = (StorageHeader*)_eeprom.getDataPtr();
+        StorageHeader *header = (StorageHeader *)_eeprom.getDataPtr();
         header->numEntries = (uint32_t)_values.size();
         uint32_t pos = sizeof(StorageHeader);
-        for (auto& key : _keys)
+        for (auto &key : _keys)
         {
             _eeprom.writeString(pos, key.first);
             pos += key.first.length() + 1;
-            const String& value = _values.at(key.second);
+            const String &value = _values.at(key.second);
             _eeprom.writeString(pos, value);
             pos += value.length() + 1;
         }
@@ -83,7 +83,7 @@ bool KeyValueStorage::IsModified()
     return _isModified;
 }
 
-int32_t KeyValueStorage::GetKeyId(const String& key) const
+int32_t KeyValueStorage::GetKeyId(const String &key) const
 {
     auto it = _keys.find(key);
     if (it != _keys.end())
@@ -99,7 +99,7 @@ void KeyValueStorage::Set(const String &key, const String &value)
     if (it != _keys.end())
     {
         const int32_t keyId = it->second;
-        const String& oldValue = _values[keyId];
+        const String &oldValue = _values[keyId];
         if (value != oldValue)
         {
             _values[keyId] = value;
@@ -115,7 +115,7 @@ void KeyValueStorage::Set(const String &key, const String &value)
     }
 }
 
-bool KeyValueStorage::Set(const int32_t keyId, const String& value)
+bool KeyValueStorage::Set(const int32_t keyId, const String &value)
 {
     auto it = _values.find(keyId);
     if (it != _values.end())
@@ -155,7 +155,6 @@ String KeyValueStorage::Get(const int32_t keyId) const
     return "";
 }
 
-
 const std::map<String, String> KeyValueStorage::GetEntries() const
 {
     std::map<String, String> result;
@@ -166,7 +165,7 @@ const std::map<String, String> KeyValueStorage::GetEntries() const
     return result;
 }
 
-void KeyValueStorage::PrintEntries(HardwareSerial& serial) const
+void KeyValueStorage::PrintEntries(HardwareSerial &serial) const
 {
     for (auto key : _keys)
     {
@@ -174,10 +173,10 @@ void KeyValueStorage::PrintEntries(HardwareSerial& serial) const
     }
 }
 
-uint32_t KeyValueStorage::ComputeHash(const void* storage) const
+uint32_t KeyValueStorage::ComputeHash(const void *storage) const
 {
     uint32_t result = HASH_SEED;
-    const uint32_t* ptr = (uint32_t*)storage;
+    const uint32_t *ptr = (uint32_t *)storage;
     for (uint32_t i = 1; i < _eepromSize / sizeof(uint32_t); i++)
     {
         result += ptr[i];
