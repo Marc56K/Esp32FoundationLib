@@ -1,8 +1,11 @@
 #include "SerialInput.h"
 
+#define MAX_BUFFER_SIZE 1024
+
 SerialInput::SerialInput(HardwareSerial& serial)
     : _serial(serial)
 {
+    _buffer.reserve(128);
 }
 
 SerialInput::~SerialInput()
@@ -13,30 +16,33 @@ bool SerialInput::ReadCommand(String &cmd, String &arg)
 {
     cmd = "";
     arg = "";
-    String buff = "";
     while (_serial.available())
     {
-        char c = _serial.read();
+        const char c = _serial.read();
+        _serial.print(c);
         if (c == '\r' || c == '\n')
         {
-            continue;
+            _buffer.trim();
+            if (_buffer.length() > 0)
+            {
+                SplitKeyValue(_buffer, " ", cmd, arg);
+            }
+            _buffer.clear();
+            return !cmd.isEmpty();
         }
-
-        buff += c;
-        if (_serial.available() == 0)
+        else if (_buffer.length() >= MAX_BUFFER_SIZE)
         {
-            vTaskDelay(1 / portTICK_PERIOD_MS);
+            _buffer.clear();
+            _serial.flush();
+            break;
+        }
+        else
+        {
+            _buffer += c;
         }
     }
 
-    buff.trim();
-
-    if (buff.length() > 0)
-    {
-        SplitKeyValue(buff, " ", cmd, arg);
-    }
-
-    return cmd.length() > 0;
+    return false;
 }
 
 bool SerialInput::SplitKeyValue(const String &input, const String& delimiter, String &key, String &value)

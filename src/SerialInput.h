@@ -14,4 +14,5 @@ private:
 
 private:
     HardwareSerial& _serial;
+    String _buffer;
 };
