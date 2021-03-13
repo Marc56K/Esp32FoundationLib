@@ -11,9 +11,9 @@ namespace esp32
         {
         private:
             struct StorageHeader
-            {
+            {           
+                uint32_t size;
                 uint32_t hash;
-                uint32_t numEntries;
             };
 
         public:
