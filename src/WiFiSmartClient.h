@@ -3,19 +3,25 @@
 #include <vector>
 #include <WiFi.h>
 
-class WiFiSmartClient
+namespace esp32
 {
-public:
-    WiFiSmartClient(const char* wifiSSID, const char* wifiKey, const char* hostName);
-    ~WiFiSmartClient();
+    namespace foundation
+    {
+        class WiFiSmartClient
+        {
+        public:
+            WiFiSmartClient(const char *wifiSSID, const char *wifiKey, const char *hostName);
+            ~WiFiSmartClient();
 
-    bool Connect(const uint32_t timeoutInMillis);
-    void Disconnect();
-    bool Connected();
+            bool Connect(const uint32_t timeoutInMillis);
+            void Disconnect();
+            bool Connected();
 
-private:
-    std::string _wifiSSID;
-    std::string _wifiKey;
-    std::string _hostName;
-    std::vector<WiFiEventId_t> _eventIds;
-};
+        private:
+            std::string _wifiSSID;
+            std::string _wifiKey;
+            std::string _hostName;
+            std::vector<WiFiEventId_t> _eventIds;
+        };
+    }
+}

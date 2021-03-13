@@ -1,18 +1,21 @@
 #pragma once
 #include <Arduino.h>
 
-class SerialInput
+namespace esp32
 {
-public:
-    SerialInput(HardwareSerial& serial = Serial);
-    ~SerialInput();
+    namespace foundation
+    {
+        class SerialInput
+        {
+        public:
+            SerialInput(HardwareSerial &serial = Serial);
+            ~SerialInput();
 
-    bool ReadCommand(String &cmd, String &arg);
+            bool ReadCommand(String &cmd, String &arg);
 
-private:
-    bool SplitKeyValue(const String &input, const String& delimiter, String &key, String &value);
-
-private:
-    HardwareSerial& _serial;
-    String _buffer;
-};
+        private:
+            HardwareSerial &_serial;
+            String _buffer;
+        };
+    }
+}
