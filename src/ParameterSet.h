@@ -133,7 +133,7 @@ namespace esp32
                 auto result = DefaultValue;
                 ParamSet.Get(_keyId, result);
 
-                return DefaultValue;
+                return result;
             }
 
             FloatParameter &operator=(const float value)
@@ -185,7 +185,7 @@ namespace esp32
                 auto result = DefaultValue;
                 ParamSet.Get(_keyId, result);
 
-                return DefaultValue;
+                return result;
             }
 
             IntegerParameter &operator=(const int32_t value)
@@ -231,7 +231,7 @@ namespace esp32
                 auto result = DefaultValue;
                 ParamSet.Get(_keyId, result);
 
-                return DefaultValue;
+                return result;
             }
 
             BooleanParameter &operator=(const bool value)
