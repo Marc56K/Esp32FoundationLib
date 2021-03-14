@@ -163,6 +163,35 @@ namespace esp32
             return _values.find(keyId) != _values.end();
         }
 
+        void KeyValueStorage::Unset(const String &key)
+        {
+            const int32_t keyId = GetKeyId(key);
+            if (keyId > -1)
+            {
+                _keys.erase(key);
+                _values.erase(keyId);
+                _isModified = true;
+            }
+        }
+
+        void KeyValueStorage::Unset(const int32_t keyId)
+        {
+            auto it = _values.find(keyId);
+            if (it != _values.end())
+            {
+                _isModified = true;
+                _values.erase(it);
+                for (auto keyIt = _keys.begin(); keyIt != _keys.end(); ++keyIt)
+                {
+                    if (keyIt->second == keyId)
+                    {
+                        _keys.erase(keyIt);
+                        return;
+                    }
+                }
+            }
+        }
+
         int32_t KeyValueStorage::Set(const String &key, const void *value, const uint32_t valueSize)
         {
             auto it = _keys.find(key);

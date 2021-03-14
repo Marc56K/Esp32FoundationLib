@@ -41,6 +41,9 @@ namespace esp32
             bool IsSet(const String &key) const;
             bool IsSet(const int32_t keyId) const;
 
+            void Unset(const String &key);
+            void Unset(const int32_t keyId);
+
             int32_t Set(const String &key, const void* value, const uint32_t valueSize);
             bool Set(const int32_t keyId, const void* value, const uint32_t valueSize);
 
