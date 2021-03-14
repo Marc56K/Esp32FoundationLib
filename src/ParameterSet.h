@@ -42,7 +42,7 @@ namespace esp32
 
             ParameterSet &ParamSet;
 
-        protected:            
+        protected:
             int32_t _keyId;
 
             Parameter(
@@ -51,9 +51,9 @@ namespace esp32
                 ParameterSet &paramSet = DefaultParameterSet)
                 : Type(type),
                   Name(name),
-                  ParamSet(paramSet)
+                  ParamSet(paramSet),
+                  _keyId(-1)
             {
-                _keyId = ParamSet.GetKeyId(Name);
             }
         };
 
@@ -70,35 +70,8 @@ namespace esp32
             {
             }
 
-            operator String()
-            {
-                ParamSet.Init();
-
-                if (_keyId < 0)
-                    _keyId = ParamSet.GetKeyId(Name);
-
-                if (_keyId < 0)
-                    return DefaultValue;
-
-                std::vector<uint8_t> val;
-                ParamSet.Get(_keyId, val);
-                return String((char *)val.data());
-            }
-
-            StringParameter &operator=(const String &value)
-            {
-                ParamSet.Init();
-
-                if (_keyId < 0)
-                {
-                    _keyId = ParamSet.Set(Name, value.c_str(), value.length() + 1);
-                }
-                else
-                {
-                    ParamSet.Set(_keyId, value.c_str(), value.length() + 1);
-                }
-                return *this;
-            }
+            operator String();
+            StringParameter &operator=(const String &value);
         };
 
         struct FloatParameter : Parameter
@@ -120,37 +93,8 @@ namespace esp32
             {
             }
 
-            operator float()
-            {
-                ParamSet.Init();
-
-                if (_keyId < 0)
-                    _keyId = ParamSet.GetKeyId(Name);
-
-                if (_keyId < 0)
-                    return DefaultValue;
-
-                auto result = DefaultValue;
-                ParamSet.Get(_keyId, result);
-
-                return result;
-            }
-
-            FloatParameter &operator=(const float value)
-            {
-                ParamSet.Init();
-
-                const auto val = constrain(value, MinValue, MaxValue);
-                if (_keyId < 0)
-                {
-                    _keyId = ParamSet.Set(Name, val);
-                }
-                else
-                {
-                    ParamSet.Set(_keyId, val);
-                }
-                return *this;
-            }
+            operator float();
+            FloatParameter &operator=(const float value);
         };
 
         struct IntegerParameter : Parameter
@@ -172,37 +116,8 @@ namespace esp32
             {
             }
 
-            operator int32_t()
-            {
-                ParamSet.Init();
-
-                if (_keyId < 0)
-                    _keyId = ParamSet.GetKeyId(Name);
-
-                if (_keyId < 0)
-                    return DefaultValue;
-
-                auto result = DefaultValue;
-                ParamSet.Get(_keyId, result);
-
-                return result;
-            }
-
-            IntegerParameter &operator=(const int32_t value)
-            {
-                ParamSet.Init();
-
-                const auto val = constrain(value, MinValue, MaxValue);
-                if (_keyId < 0)
-                {
-                    _keyId = ParamSet.Set(Name, val);
-                }
-                else
-                {
-                    ParamSet.Set(_keyId, val);
-                }
-                return *this;
-            }
+            operator int32_t();
+            IntegerParameter &operator=(const int32_t value);
         };
 
         struct BooleanParameter : Parameter
@@ -218,36 +133,8 @@ namespace esp32
             {
             }
 
-            operator bool()
-            {
-                ParamSet.Init();
-
-                if (_keyId < 0)
-                    _keyId = ParamSet.GetKeyId(Name);
-
-                if (_keyId < 0)
-                    return DefaultValue;
-
-                auto result = DefaultValue;
-                ParamSet.Get(_keyId, result);
-
-                return result;
-            }
-
-            BooleanParameter &operator=(const bool value)
-            {
-                ParamSet.Init();
-
-                if (_keyId < 0)
-                {
-                    _keyId = ParamSet.Set(Name, value);
-                }
-                else
-                {
-                    ParamSet.Set(_keyId, value);
-                }
-                return *this;
-            }
+            operator bool();
+            BooleanParameter &operator=(const bool value);
         };
     }
 }
