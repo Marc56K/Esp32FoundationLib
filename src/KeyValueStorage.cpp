@@ -12,6 +12,7 @@ namespace esp32
             const uint32_t eepromSize)
             : _eeprom(eeprom),
               _eepromSize(max<uint32_t>(sizeof(StorageHeader), eepromSize)),
+              _isLoaded(false),
               _isModified(false),
               _maxKeyId(-1)
         {
@@ -69,6 +70,7 @@ namespace esp32
             }
 
             _isModified = false;
+            _isLoaded = true;
 
             return _values.size();
         }
@@ -136,6 +138,11 @@ namespace esp32
             return _isModified;
         }
 
+        bool KeyValueStorage::IsLoaded()
+        {
+            return _isLoaded;
+        }
+
         int32_t KeyValueStorage::GetKeyId(const String &key) const
         {
             auto it = _keys.find(key);
@@ -146,13 +153,24 @@ namespace esp32
             return -1;
         }
 
-        void KeyValueStorage::Set(const String &key, const void *value, const uint32_t valueSize)
+        bool KeyValueStorage::IsSet(const String &key) const
+        {
+            return _keys.find(key) != _keys.end();
+        }
+
+        bool KeyValueStorage::IsSet(const int32_t keyId) const
+        {
+            return _values.find(keyId) != _values.end();
+        }
+
+        int32_t KeyValueStorage::Set(const String &key, const void *value, const uint32_t valueSize)
         {
             auto it = _keys.find(key);
             if (it != _keys.end())
             {
                 const int32_t keyId = it->second;
                 Set(keyId, value, valueSize);
+                return keyId;
             }
             else
             {
@@ -163,6 +181,7 @@ namespace esp32
                 _keys[key] = _maxKeyId;
                 _values[_maxKeyId] = buff;
                 _isModified = true;
+                return _maxKeyId;
             }
         }
 
@@ -183,16 +202,6 @@ namespace esp32
             return false;
         }
 
-        bool KeyValueStorage::IsSet(const String &key) const
-        {
-            return _keys.find(key) != _keys.end();
-        }
-
-        bool KeyValueStorage::IsSet(const int32_t keyId) const
-        {
-            return _values.find(keyId) != _values.end();
-        }
-
         bool KeyValueStorage::Get(const String &key, std::vector<uint8_t> &result) const
         {
             return Get(GetKeyId(key), result);
@@ -204,6 +213,7 @@ namespace esp32
             if (it != _values.end())
             {
                 result = it->second;
+                return true;
             }
             return false;
         }
