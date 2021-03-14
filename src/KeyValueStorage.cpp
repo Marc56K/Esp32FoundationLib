@@ -1,7 +1,7 @@
 #include "KeyValueStorage.h"
 #include <vector>
 
-#define HASH_SEED 100
+#define HASH_SEED 0x2c58ad4d 
 
 namespace esp32
 {
@@ -34,24 +34,36 @@ namespace esp32
                 _eeprom.end();
             }
 
-            StorageHeader *header = (StorageHeader *)buffer.data();
-            const uint32_t actualHash = ComputeHash(buffer.data());
+            uint8_t *buff = buffer.data();
+            StorageHeader *header = (StorageHeader *)buff;
+            const uint32_t actualHash = ComputeHash(buff);
             if (header->hash == actualHash)
             {
-                uint8_t *ptr = buffer.data() + sizeof(StorageHeader);
-                const uint32_t numEntries = *(uint32_t *)ptr;
-                ptr += sizeof(uint32_t);
-                for (uint32_t i = 0; i < numEntries; i++)
+                uint8_t *ptr = buff + sizeof(StorageHeader);
+                const uint8_t *endPtr = buff + header->totalSize;
+                while (ptr < endPtr)
                 {
+                    const EntryHeader* entry = (EntryHeader*)ptr;
+                    ptr += sizeof(EntryHeader);
+
+                    if (ptr > endPtr) break;
+
+                    // check null terminatin of key
+                    if (entry->keySize == 0 || ptr[entry->keySize - 1] != 0) break;
+
                     const String key = (char *)ptr;
-                    ptr += key.length() + 1;
+                    ptr += entry->keySize;
 
-                    const String value = (char *)ptr;
-                    ptr += value.length() + 1;
+                    if (ptr > endPtr) break;
 
-                    if (key.length() > 0 && value.length() > 0)
+                    const uint8_t *value = (uint8_t *)ptr;
+                    ptr += entry->valueSize;
+
+                    if (ptr > endPtr) break;
+
+                    if (entry->keySize > 0 && entry->valueSize > 0)
                     {
-                        Set(key, value);
+                        Set(key, value, entry->valueSize);
                     }
                 }
             }
@@ -59,6 +71,16 @@ namespace esp32
             _isModified = false;
 
             return _values.size();
+        }
+
+        void KeyValueStorage::Clear()
+        {
+            if (!_keys.empty())
+            {
+                _isModified = true;
+                _keys.clear();
+                _values.clear();
+            }
         }
 
         void KeyValueStorage::Save()
@@ -70,27 +92,36 @@ namespace esp32
                 uint8_t *ptr = _eeprom.getDataPtr();
 
                 StorageHeader *header = (StorageHeader *)ptr;
-                header->size = sizeof(StorageHeader) + sizeof(uint32_t);
+                header->totalSize = sizeof(StorageHeader);
                 ptr += sizeof(StorageHeader);
-
-                uint32_t &numEntries = *(uint32_t *)ptr;
-                numEntries = 0;
-                ptr += sizeof(uint32_t);
 
                 for (auto &key : _keys)
                 {
-                    const String &value = _values.at(key.second);
-                    const uint32_t keySize = key.first.length() + 1;
-                    const uint32_t valSize = value.length() + 1;
-                    if (header->size + keySize + valSize > _eepromSize)
+                    const auto &value = _values.at(key.second);
+                    if (value.empty())
+                    {
+                        continue;
+                    }
+
+                    EntryHeader entry;
+                    entry.keySize = key.first.length() + 1;
+                    entry.valueSize = value.size();
+                    if (header->totalSize + sizeof(EntryHeader) + entry.keySize + entry.valueSize > _eepromSize)
                     {
                         break;
                     }
-                    _eeprom.writeString(header->size, key.first);
-                    header->size += keySize;
-                    _eeprom.writeString(header->size, value);
-                    header->size += valSize;
-                    numEntries++;
+                    
+                    _eeprom.writeBytes(header->totalSize, &entry, sizeof(EntryHeader));
+                    header->totalSize += sizeof(EntryHeader);
+                    _eeprom.writeBytes(header->totalSize, key.first.c_str(), entry.keySize);
+                    header->totalSize += entry.keySize;
+                    _eeprom.writeBytes(header->totalSize, value.data(), entry.valueSize);
+                    header->totalSize += entry.valueSize;
+                }
+
+                if (header->totalSize < _eepromSize)
+                {
+                    memset(_eeprom.getDataPtr() + header->totalSize, 0, _eepromSize - header->totalSize);
                 }
 
                 header->hash = ComputeHash(_eeprom.getDataPtr());
@@ -115,36 +146,36 @@ namespace esp32
             return -1;
         }
 
-        void KeyValueStorage::Set(const String &key, const String &value)
+        void KeyValueStorage::Set(const String &key, const void *value, const uint32_t valueSize)
         {
             auto it = _keys.find(key);
             if (it != _keys.end())
             {
                 const int32_t keyId = it->second;
-                const String &oldValue = _values[keyId];
-                if (value != oldValue)
-                {
-                    _values[keyId] = value;
-                    _isModified = true;
-                }
+                Set(keyId, value, valueSize);
             }
             else
             {
+                std::vector<uint8_t> buff(valueSize);
+                memcpy(buff.data(), value, valueSize);
+
                 _maxKeyId++;
                 _keys[key] = _maxKeyId;
-                _values[_maxKeyId] = value;
+                _values[_maxKeyId] = buff;
                 _isModified = true;
             }
         }
 
-        bool KeyValueStorage::Set(const int32_t keyId, const String &value)
+        bool KeyValueStorage::Set(const int32_t keyId, const void *value, const uint32_t valueSize)
         {
             auto it = _values.find(keyId);
             if (it != _values.end())
             {
-                if (it->second != value)
+                auto &buff = it->second;
+                if (buff.size() != valueSize || memcmp(value, buff.data(), valueSize) != 0)
                 {
-                    _values[keyId] = value;
+                    buff.resize(valueSize);
+                    memcpy(buff.data(), value, valueSize);
                     _isModified = true;
                 }
                 return true;
@@ -162,24 +193,24 @@ namespace esp32
             return _values.find(keyId) != _values.end();
         }
 
-        String KeyValueStorage::Get(const String &key) const
+        bool KeyValueStorage::Get(const String &key, std::vector<uint8_t> &result) const
         {
-            return Get(GetKeyId(key));
+            return Get(GetKeyId(key), result);
         }
 
-        String KeyValueStorage::Get(const int32_t keyId) const
+        bool KeyValueStorage::Get(const int32_t keyId, std::vector<uint8_t> &result) const
         {
             auto it = _values.find(keyId);
             if (it != _values.end())
             {
-                return it->second;
+                result = it->second;
             }
-            return "";
+            return false;
         }
 
-        const std::map<String, String> KeyValueStorage::GetEntries() const
+        const std::map<String, std::vector<uint8_t>> KeyValueStorage::GetEntries() const
         {
-            std::map<String, String> result;
+            std::map<String, std::vector<uint8_t>> result;
             for (auto key : _keys)
             {
                 result[key.first] = _values.at(key.second);
@@ -187,22 +218,11 @@ namespace esp32
             return result;
         }
 
-        void KeyValueStorage::PrintEntries(HardwareSerial &serial) const
-        {
-            for (auto key : _keys)
-            {
-                serial.println(key.first + "=" + _values.at(key.second));
-            }
-        }
-
         uint32_t KeyValueStorage::ComputeHash(const void *storage) const
         {
-            const auto header = (StorageHeader *)storage;
-            const uint32_t size = min<uint32_t>(_eepromSize, max<uint32_t>(128, header->size));
-
             uint32_t result = HASH_SEED;
             const uint32_t *ptr = (uint32_t *)storage;
-            for (uint32_t i = sizeof(StorageHeader) / sizeof(uint32_t); i < size / sizeof(uint32_t); i++)
+            for (uint32_t i = sizeof(StorageHeader) / sizeof(uint32_t); i < _eepromSize / sizeof(uint32_t); i++)
             {
                 result += ptr[i];
             }

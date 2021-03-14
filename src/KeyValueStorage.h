@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include <EEPROM.h>
 #include <map>
+#include <vector>
 
 namespace esp32
 {
@@ -12,8 +13,14 @@ namespace esp32
         private:
             struct StorageHeader
             {           
-                uint32_t size;
+                uint32_t totalSize;
                 uint32_t hash;
+            };
+
+            struct EntryHeader
+            {
+                uint32_t keySize;
+                uint32_t valueSize;
             };
 
         public:
@@ -24,22 +31,22 @@ namespace esp32
             ~KeyValueStorage();
 
             uint32_t Load();
+            void Clear();
             void Save();
             bool IsModified();
 
             int32_t GetKeyId(const String &key) const;
 
-            void Set(const String &key, const String &value);
-            bool Set(const int32_t keyId, const String &value);
+            void Set(const String &key, const void* value, const uint32_t valueSize);
+            bool Set(const int32_t keyId, const void* value, const uint32_t valueSize);
 
             bool IsSet(const String &key) const;
             bool IsSet(const int32_t keyId) const;
 
-            String Get(const String &key) const;
-            String Get(const int32_t keyId) const;
+            bool Get(const String &key, std::vector<uint8_t>& result) const;
+            bool Get(const int32_t keyId, std::vector<uint8_t>& result) const;
 
-            const std::map<String, String> GetEntries() const;
-            void PrintEntries(HardwareSerial &serial = Serial) const;
+            const std::map<String, std::vector<uint8_t>> GetEntries() const;
 
         private:
             uint32_t ComputeHash(const void *storage) const;
@@ -50,7 +57,7 @@ namespace esp32
             bool _isModified;
             int32_t _maxKeyId;
             std::map<String, int32_t> _keys;
-            std::map<int32_t, String> _values;
+            std::map<int32_t, std::vector<uint8_t>> _values;
         };
     }
 }
