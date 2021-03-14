@@ -10,7 +10,7 @@ namespace esp32
     {
         class KeyValueStorage
         {
-        private:
+        protected:
             struct StorageHeader
             {           
                 uint32_t totalSize;
@@ -28,11 +28,12 @@ namespace esp32
                 EEPROMClass &eeprom = EEPROM,
                 const uint32_t eepromSize = 512);
 
-            ~KeyValueStorage();
-
-            uint32_t Load();
-            void Clear();
-            void Save();
+            virtual ~KeyValueStorage();
+            
+            virtual bool Load();
+            virtual uint32_t Reload();
+            virtual void Clear();
+            virtual void Save();
             bool IsModified();
             bool IsLoaded();
 
@@ -80,12 +81,13 @@ namespace esp32
                 return false;
             }
 
-            const std::map<String, std::vector<uint8_t>> GetEntries() const;
+            const std::map<String, int32_t>& GetKeys() const;
+            const std::map<int32_t, std::vector<uint8_t>>& GetValues() const;
 
-        private:
+        protected:
             uint32_t ComputeHash(const void *storage) const;
 
-        private:
+        protected:
             EEPROMClass &_eeprom;
             uint32_t _eepromSize;
             bool _isLoaded;

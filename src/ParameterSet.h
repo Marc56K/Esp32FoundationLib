@@ -1,6 +1,6 @@
 #pragma once
 #include "KeyValueStorage.h"
-#include <set>
+#include <map>
 
 namespace esp32
 {
@@ -14,15 +14,18 @@ namespace esp32
             ParameterSet(
                 EEPROMClass &eeprom = EEPROM,
                 const uint32_t eepromSize = 512);
-            ~ParameterSet();
+            virtual ~ParameterSet();
 
-            void Init();
+            virtual void Save() override;
 
             void Register(Parameter *parameter);
             void Unregister(Parameter *parameter);
 
+            Parameter *GetParameter(const String &name) const;
+            const std::map<String, Parameter *> &GetParameters() const;
+
         private:
-            std::set<Parameter *> _params;
+            std::map<String, Parameter *> _params;
         };
 
         extern ParameterSet DefaultParameterSet;
@@ -39,8 +42,14 @@ namespace esp32
         {
             const ParameterType Type;
             const String Name;
-
             ParameterSet &ParamSet;
+
+            virtual ~Parameter()
+            {
+                ParamSet.Unregister(this);
+            }
+
+            virtual String ToString() = 0;
 
         protected:
             int32_t _keyId;
@@ -54,6 +63,7 @@ namespace esp32
                   ParamSet(paramSet),
                   _keyId(-1)
             {
+                ParamSet.Register(this);
             }
         };
 
@@ -70,6 +80,8 @@ namespace esp32
             {
             }
 
+            virtual String ToString() override;
+
             operator String();
             StringParameter &operator=(const String &value);
         };
@@ -77,21 +89,26 @@ namespace esp32
         struct FloatParameter : Parameter
         {
             const float DefaultValue;
+            const uint8_t DecimalPlaces;
             const float MinValue;
             const float MaxValue;
 
             FloatParameter(
                 const String &name,
                 const float defaultValue = 0.0f,
+                const uint8_t decimalPlaces = 2,
                 const float minValue = -std::numeric_limits<float>::max(),
                 const float maxValue = std::numeric_limits<float>::max(),
                 ParameterSet &paramSet = DefaultParameterSet)
                 : Parameter(PT_FLOAT, name, paramSet),
                   DefaultValue(defaultValue),
+                  DecimalPlaces(decimalPlaces),
                   MinValue(minValue),
                   MaxValue(maxValue)
             {
             }
+
+            virtual String ToString() override;
 
             operator float();
             FloatParameter &operator=(const float value);
@@ -116,6 +133,8 @@ namespace esp32
             {
             }
 
+            virtual String ToString() override;
+
             operator int32_t();
             IntegerParameter &operator=(const int32_t value);
         };
@@ -132,6 +151,8 @@ namespace esp32
                   DefaultValue(defaultValue)
             {
             }
+
+            virtual String ToString() override;
 
             operator bool();
             BooleanParameter &operator=(const bool value);

@@ -22,7 +22,17 @@ namespace esp32
         {
         }
 
-        uint32_t KeyValueStorage::Load()
+        bool KeyValueStorage::Load()
+        {
+            if (!IsLoaded())
+            {
+                Reload();
+                return true;
+            }
+            return false;
+        }
+
+        uint32_t KeyValueStorage::Reload()
         {
             _maxKeyId = -1;
             _values.clear();
@@ -247,14 +257,14 @@ namespace esp32
             return false;
         }
 
-        const std::map<String, std::vector<uint8_t>> KeyValueStorage::GetEntries() const
+        const std::map<String, int32_t>& KeyValueStorage::GetKeys() const
         {
-            std::map<String, std::vector<uint8_t>> result;
-            for (auto key : _keys)
-            {
-                result[key.first] = _values.at(key.second);
-            }
-            return result;
+            return _keys;
+        }
+
+        const std::map<int32_t, std::vector<uint8_t>>& KeyValueStorage::GetValues() const
+        {
+            return _values;
         }
 
         uint32_t KeyValueStorage::ComputeHash(const void *storage) const
