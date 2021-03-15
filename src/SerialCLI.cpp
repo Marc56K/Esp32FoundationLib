@@ -85,6 +85,9 @@ namespace esp32
                     }
                 }
 
+                _serial.print(F("Unknown command: '"));
+                _serial.print(cmd);
+                _serial.println(F("'"));
                 PrintCommands();
             }
         }
@@ -96,9 +99,9 @@ namespace esp32
             while (_serial.available())
             {
                 const char c = _serial.read();
-                _serial.print(c);
                 if (c == '\r' || c == '\n')
                 {
+                    _serial.println();
                     _buffer.trim();
                     if (_buffer.length() > 0)
                     {
@@ -113,8 +116,19 @@ namespace esp32
                     _serial.flush();
                     break;
                 }
-                else
+                else if (c == 0x8) // backspace
                 {
+                    if (!_buffer.isEmpty())
+                    {
+                        _serial.print(c);
+                        _serial.print(' ');
+                        _serial.print(c);
+                        _buffer.remove(_buffer.length() - 1, 1);
+                    }
+                }
+                else if ((c >= 0x20 && c <= 0x7E) || (c >= 0xA0 && c <= 0xFF)) // printable chars
+                {
+                    _serial.print(c);
                     _buffer += c;
                 }
             }
