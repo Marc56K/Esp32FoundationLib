@@ -17,6 +17,79 @@ namespace esp32
         {
         }
 
+        void SerialInput::PrintCommands()
+        {
+            _serial.println(F("*************************************************************"));
+            _serial.println(F("USAGE:"));
+            for (auto& handler : _handlers)
+            {
+                const String& name = handler.first;
+                const String& desc = std::get<1>(handler.second);
+                _serial.print("  ");
+                _serial.print(name);
+                if (!desc.isEmpty())
+                {
+                    for (uint8_t i = name.length(); i < 10; i++) _serial.print(" ");
+                    _serial.print(" : ");
+                    _serial.println(desc);
+                }
+            }
+            _serial.println(F("*************************************************************"));
+        }
+
+        void SerialInput::On(
+            const String &cmd,
+            std::function<bool()> handler,
+            const String &description)
+        {
+            _handlers[cmd] = SerialInputHandler([handler](const String& arg) -> bool
+            {
+                return handler();
+            }, description);
+        }
+
+        void SerialInput::On(
+            const String &cmd,
+            std::function<bool(const String &arg)> handler,
+            const String &description)
+        {
+            _handlers[cmd] = SerialInputHandler(handler, description);
+        }
+
+        void SerialInput::On(
+            const String &cmd,
+            std::function<bool(const String &arg0, const String &arg1)> handler,
+            const String &description)
+        {
+            _handlers[cmd] = SerialInputHandler([handler](const String& arg) -> bool
+            {
+                String arg0, arg1;
+                StringUtils::SplitKeyValue(arg, " ", arg0, arg1);
+                return handler(arg0, arg1);
+            }, description);
+        }
+
+        void SerialInput::Update()
+        {
+            String cmd, arg;
+            if (ReadCommand(cmd, arg))
+            {
+                _serial.println(cmd + " -> " + arg);
+                auto handlerIt = _handlers.find(cmd);
+                if (handlerIt != _handlers.end())
+                {
+                    auto handler = std::get<0>(handlerIt->second);
+                    if (handler(arg))
+                    {
+                        _serial.println("done");
+                        return;
+                    }
+                }
+
+                PrintCommands();
+            }
+        }
+
         bool SerialInput::ReadCommand(String &cmd, String &arg)
         {
             cmd = "";
