@@ -22,17 +22,17 @@ namespace esp32
         {
         }
 
-        bool KeyValueStorage::Load()
+        bool KeyValueStorage::LoadFromEEPROM()
         {
             if (!IsLoaded())
             {
-                Reload();
+                ReloadFromEEPROM();
                 return true;
             }
             return false;
         }
 
-        uint32_t KeyValueStorage::Reload()
+        uint32_t KeyValueStorage::ReloadFromEEPROM()
         {
             _maxKeyId = -1;
             _values.clear();
@@ -85,17 +85,7 @@ namespace esp32
             return _values.size();
         }
 
-        void KeyValueStorage::Clear()
-        {
-            if (!_keys.empty())
-            {
-                _isModified = true;
-                _keys.clear();
-                _values.clear();
-            }
-        }
-
-        void KeyValueStorage::Save()
+        void KeyValueStorage::SaveToEEPROM()
         {
             if (_isModified && _eeprom.begin(_eepromSize))
             {
@@ -140,6 +130,16 @@ namespace esp32
 
                 _eeprom.commit();
                 _eeprom.end();
+            }
+        }
+
+        void KeyValueStorage::Clear()
+        {
+            if (!_keys.empty())
+            {
+                _isModified = true;
+                _keys.clear();
+                _values.clear();
             }
         }
 

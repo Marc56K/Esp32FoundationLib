@@ -15,7 +15,7 @@ namespace esp32
         {
         }
 
-        void ParameterSet::Save()
+        void ParameterSet::SaveToEEPROM()
         {
             std::vector<String> garbage;
             for (auto &key : _keys)
@@ -29,23 +29,17 @@ namespace esp32
             {
                 Unset(name);
             }
-            KeyValueStorage::Save();
+            KeyValueStorage::SaveToEEPROM();
         }
 
-        void ParameterSet::Register(Parameter *parameter)
+        void ParameterSet::Register(Parameter &parameter)
         {
-            if (parameter != nullptr)
-            {
-                _params[parameter->Name] = parameter;
-            }
+            _params[parameter.Name] = &parameter;
         }
 
-        void ParameterSet::Unregister(Parameter *parameter)
+        void ParameterSet::Unregister(Parameter &parameter)
         {
-            if (parameter != nullptr)
-            {
-                _params.erase(parameter->Name);
-            }
+            _params.erase(parameter.Name);
         }
 
         Parameter *ParameterSet::GetParameter(const String &name) const
@@ -65,6 +59,36 @@ namespace esp32
 
         ParameterSet DefaultParameterSet;
 
+        /*************/
+        /* Parameter */
+        /*************/
+
+        Parameter::Parameter(
+            const ParameterType type,
+            const String &name,
+            ParameterSet &paramSet)
+            : Type(type),
+                Name(name),
+                ParamSet(paramSet),
+                _keyId(-1)
+        {
+            ParamSet.Register(*this);
+        }
+
+        Parameter::~Parameter()
+        {
+            ParamSet.Unregister(*this);
+        }
+
+        /*******************/
+        /* StringParameter */
+        /*******************/
+
+        void StringParameter::SetFromString(const String& value)
+        {
+            *this = value;
+        }
+
         String StringParameter::ToString()
         {
             return (String)(*this);
@@ -72,7 +96,7 @@ namespace esp32
 
         StringParameter::operator String()
         {
-            ParamSet.Load();
+            ParamSet.LoadFromEEPROM();
 
             if (_keyId < 0)
                 _keyId = ParamSet.GetKeyId(Name);
@@ -87,7 +111,7 @@ namespace esp32
 
         StringParameter &StringParameter::operator=(const String &value)
         {
-            ParamSet.Load();
+            ParamSet.LoadFromEEPROM();
 
             if (_keyId < 0)
             {
@@ -98,7 +122,16 @@ namespace esp32
                 ParamSet.Set(_keyId, value.c_str(), value.length() + 1);
             }
             return *this;
-        } 
+        }
+
+        /******************/
+        /* FloatParameter */
+        /******************/
+
+        void FloatParameter::SetFromString(const String& value)
+        {
+            *this = value.toFloat();
+        }
 
         String FloatParameter::ToString()
         {
@@ -107,7 +140,7 @@ namespace esp32
 
         FloatParameter::operator float()
         {
-            ParamSet.Load();
+            ParamSet.LoadFromEEPROM();
 
             if (_keyId < 0)
                 _keyId = ParamSet.GetKeyId(Name);
@@ -123,7 +156,7 @@ namespace esp32
 
         FloatParameter &FloatParameter::operator=(const float value)
         {
-            ParamSet.Load();
+            ParamSet.LoadFromEEPROM();
 
             const auto val = constrain(value, MinValue, MaxValue);
             if (_keyId < 0)
@@ -137,6 +170,15 @@ namespace esp32
             return *this;
         }
 
+        /********************/
+        /* IntegerParameter */
+        /********************/
+
+        void IntegerParameter::SetFromString(const String& value)
+        {
+            *this = value.toInt();
+        }
+
         String IntegerParameter::ToString()
         {
             return String((int32_t)*this);
@@ -144,7 +186,7 @@ namespace esp32
 
         IntegerParameter::operator int32_t()
         {
-            ParamSet.Load();
+            ParamSet.LoadFromEEPROM();
 
             if (_keyId < 0)
                 _keyId = ParamSet.GetKeyId(Name);
@@ -160,7 +202,7 @@ namespace esp32
 
         IntegerParameter &IntegerParameter::operator=(const int32_t value)
         {
-            ParamSet.Load();
+            ParamSet.LoadFromEEPROM();
 
             const auto val = constrain(value, MinValue, MaxValue);
             if (_keyId < 0)
@@ -174,6 +216,32 @@ namespace esp32
             return *this;
         }
 
+        /********************/
+        /* BooleanParameter */
+        /********************/
+
+        void BooleanParameter::SetFromString(const String& value)
+        {
+            if (value.isEmpty())
+            {
+                *this = false;
+            }
+            else
+            {
+                switch(value[0])
+                {
+                    case 'f':
+                    case 'F':
+                    case '0':
+                        *this = false;
+                        break;
+                    default:
+                        *this = true;
+                        break;
+                }
+            }      
+        }
+
         String BooleanParameter::ToString()
         {
             return (*this) ? "true" : "false";
@@ -181,7 +249,7 @@ namespace esp32
 
         BooleanParameter::operator bool()
         {
-            ParamSet.Load();
+            ParamSet.LoadFromEEPROM();
 
             if (_keyId < 0)
                 _keyId = ParamSet.GetKeyId(Name);
@@ -197,7 +265,7 @@ namespace esp32
 
         BooleanParameter &BooleanParameter::operator=(const bool value)
         {
-            ParamSet.Load();
+            ParamSet.LoadFromEEPROM();
 
             if (_keyId < 0)
             {

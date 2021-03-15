@@ -16,10 +16,10 @@ namespace esp32
                 const uint32_t eepromSize = 512);
             virtual ~ParameterSet();
 
-            virtual void Save() override;
+            virtual void SaveToEEPROM() override;
 
-            void Register(Parameter *parameter);
-            void Unregister(Parameter *parameter);
+            void Register(Parameter &parameter);
+            void Unregister(Parameter &parameter);
 
             Parameter *GetParameter(const String &name) const;
             const std::map<String, Parameter *> &GetParameters() const;
@@ -44,11 +44,8 @@ namespace esp32
             const String Name;
             ParameterSet &ParamSet;
 
-            virtual ~Parameter()
-            {
-                ParamSet.Unregister(this);
-            }
-
+            virtual ~Parameter();
+            virtual void SetFromString(const String& value) = 0;
             virtual String ToString() = 0;
 
         protected:
@@ -57,14 +54,7 @@ namespace esp32
             Parameter(
                 const ParameterType type,
                 const String &name,
-                ParameterSet &paramSet = DefaultParameterSet)
-                : Type(type),
-                  Name(name),
-                  ParamSet(paramSet),
-                  _keyId(-1)
-            {
-                ParamSet.Register(this);
-            }
+                ParameterSet &paramSet = DefaultParameterSet);
         };
 
         struct StringParameter : Parameter
@@ -80,6 +70,7 @@ namespace esp32
             {
             }
 
+            virtual void SetFromString(const String& value) override;
             virtual String ToString() override;
 
             operator String();
@@ -108,6 +99,7 @@ namespace esp32
             {
             }
 
+            virtual void SetFromString(const String& value) override;
             virtual String ToString() override;
 
             operator float();
@@ -133,6 +125,7 @@ namespace esp32
             {
             }
 
+            virtual void SetFromString(const String& value) override;
             virtual String ToString() override;
 
             operator int32_t();
@@ -152,6 +145,7 @@ namespace esp32
             {
             }
 
+            virtual void SetFromString(const String& value) override;
             virtual String ToString() override;
 
             operator bool();

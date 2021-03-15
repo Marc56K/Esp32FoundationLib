@@ -30,10 +30,10 @@ namespace esp32
 
             virtual ~KeyValueStorage();
             
-            virtual bool Load();
-            virtual uint32_t Reload();
+            virtual bool LoadFromEEPROM();
+            virtual uint32_t ReloadFromEEPROM();
+            virtual void SaveToEEPROM();
             virtual void Clear();
-            virtual void Save();
             bool IsModified();
             bool IsLoaded();
 
