@@ -1,4 +1,4 @@
-#include "SerialInput.h"
+#include "SerialCLI.h"
 #include "StringUtils.h"
 
 #define MAX_BUFFER_SIZE 1024
@@ -7,17 +7,17 @@ namespace esp32
 {
     namespace foundation
     {
-        SerialInput::SerialInput(HardwareSerial &serial)
+        SerialCLI::SerialCLI(HardwareSerial &serial)
             : _serial(serial)
         {
             _buffer.reserve(128);
         }
 
-        SerialInput::~SerialInput()
+        SerialCLI::~SerialCLI()
         {
         }
 
-        void SerialInput::PrintCommands()
+        void SerialCLI::PrintCommands()
         {
             _serial.println(F("*************************************************************"));
             _serial.println(F("USAGE:"));
@@ -25,19 +25,19 @@ namespace esp32
             {
                 const String& name = handler.first;
                 const String& desc = std::get<1>(handler.second);
-                _serial.print("  ");
+                _serial.print(F("  "));
                 _serial.print(name);
                 if (!desc.isEmpty())
                 {
                     for (uint8_t i = name.length(); i < 10; i++) _serial.print(" ");
-                    _serial.print(" : ");
+                    _serial.print(F(" : "));
                     _serial.println(desc);
                 }
             }
             _serial.println(F("*************************************************************"));
         }
 
-        void SerialInput::On(
+        void SerialCLI::On(
             const String &cmd,
             std::function<bool()> handler,
             const String &description)
@@ -48,7 +48,7 @@ namespace esp32
             }, description);
         }
 
-        void SerialInput::On(
+        void SerialCLI::On(
             const String &cmd,
             std::function<bool(const String &arg)> handler,
             const String &description)
@@ -56,7 +56,7 @@ namespace esp32
             _handlers[cmd] = SerialInputHandler(handler, description);
         }
 
-        void SerialInput::On(
+        void SerialCLI::On(
             const String &cmd,
             std::function<bool(const String &arg0, const String &arg1)> handler,
             const String &description)
@@ -69,7 +69,7 @@ namespace esp32
             }, description);
         }
 
-        void SerialInput::Update()
+        void SerialCLI::Update()
         {
             String cmd, arg;
             if (ReadCommand(cmd, arg))
@@ -81,7 +81,7 @@ namespace esp32
                     auto handler = std::get<0>(handlerIt->second);
                     if (handler(arg))
                     {
-                        _serial.println("done");
+                        _serial.println(F("done"));
                         return;
                     }
                 }
@@ -90,7 +90,7 @@ namespace esp32
             }
         }
 
-        bool SerialInput::ReadCommand(String &cmd, String &arg)
+        bool SerialCLI::ReadCommand(String &cmd, String &arg)
         {
             cmd = "";
             arg = "";

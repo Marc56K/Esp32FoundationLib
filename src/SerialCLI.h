@@ -10,11 +10,11 @@ namespace esp32
     {
         typedef std::tuple<std::function<bool(const String&)>, String> SerialInputHandler;
 
-        class SerialInput
+        class SerialCLI
         {
         public:
-            SerialInput(HardwareSerial &serial = Serial);
-            ~SerialInput();
+            SerialCLI(HardwareSerial &serial = Serial);
+            ~SerialCLI();
 
             void PrintCommands();
 
