@@ -74,7 +74,6 @@ namespace esp32
             String cmd, arg;
             if (ReadCommand(cmd, arg))
             {
-                _serial.println(cmd + " -> " + arg);
                 auto handlerIt = _handlers.find(cmd);
                 if (handlerIt != _handlers.end())
                 {
