@@ -57,6 +57,16 @@ namespace esp32
             return _params;
         }
 
+        void ParameterSet::PrintParameters(HardwareSerial& serial) const
+        {
+            for (auto& param : _params)
+            {
+                serial.print(param.first);
+                serial.print(" = ");
+                serial.println(param.second->ToString());
+            }
+        }
+
         ParameterSet DefaultParameterSet;
 
         /*************/

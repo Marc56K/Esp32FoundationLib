@@ -24,6 +24,8 @@ namespace esp32
             Parameter *GetParameter(const String &name) const;
             const std::map<String, Parameter *> &GetParameters() const;
 
+            void PrintParameters(HardwareSerial& serial) const;
+
         private:
             std::map<String, Parameter *> _params;
         };
