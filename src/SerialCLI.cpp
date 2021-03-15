@@ -84,10 +84,12 @@ namespace esp32
                         return;
                     }
                 }
-
-                _serial.print(F("Unknown command: '"));
-                _serial.print(cmd);
-                _serial.println(F("'"));
+                else
+                {
+                    _serial.print(F("Unknown command: '"));
+                    _serial.print(cmd);
+                    _serial.println(F("'"));
+                }
                 PrintCommands();
             }
         }
