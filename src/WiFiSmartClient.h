@@ -10,17 +10,21 @@ namespace esp32
         class WiFiSmartClient
         {
         public:
-            WiFiSmartClient(const char *wifiSSID, const char *wifiKey, const char *hostName);
+            WiFiSmartClient();
             ~WiFiSmartClient();
 
-            bool Connect(const uint32_t timeoutInMillis);
+            bool Connect(
+                const String &wifiSSID,
+                const String &wifiKey,
+                const String &hostName,
+                const uint32_t timeoutInMillis = 5000);
             void Disconnect();
             bool Connected();
 
         private:
-            std::string _wifiSSID;
-            std::string _wifiKey;
-            std::string _hostName;
+            String _wifiSSID;
+            String _wifiKey;
+            String _hostName;
             std::vector<WiFiEventId_t> _eventIds;
         };
     }

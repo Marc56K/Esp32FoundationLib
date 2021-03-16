@@ -1,4 +1,5 @@
 #include "StringUtils.h"
+#include <sstream>
 
 namespace esp32
 {

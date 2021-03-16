@@ -4,13 +4,7 @@ namespace esp32
 {
     namespace foundation
     {
-        WiFiSmartClient::WiFiSmartClient(
-            const char *wifiSSID,
-            const char *wifiKey,
-            const char *hostName)
-            : _wifiSSID(wifiSSID),
-              _wifiKey(wifiKey),
-              _hostName(hostName)
+        WiFiSmartClient::WiFiSmartClient()
         {
         }
 
@@ -19,22 +13,33 @@ namespace esp32
             Disconnect();
         }
 
-        bool WiFiSmartClient::Connect(const uint32_t timeoutInMillis)
+        bool WiFiSmartClient::Connect(
+                const String &wifiSSID,
+                const String &wifiKey,
+                const String &hostName,
+                const uint32_t timeoutInMillis)
         {
+            if (_wifiSSID != wifiSSID || _wifiKey != wifiKey || _hostName != hostName)
+            {
+                Disconnect();
+            }
+
             if (_eventIds.empty())
             {
                 _eventIds.push_back(
                     WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
                         Serial.print("Obtained IP address: ");
                         Serial.println(WiFi.localIP());
-                    },
-                                 WiFiEvent_t::SYSTEM_EVENT_STA_GOT_IP));
+                    }, WiFiEvent_t::SYSTEM_EVENT_STA_GOT_IP));
 
                 _eventIds.push_back(
                     WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
                         WiFi.reconnect();
-                    },
-                                 WiFiEvent_t::SYSTEM_EVENT_STA_DISCONNECTED));
+                    }, WiFiEvent_t::SYSTEM_EVENT_STA_DISCONNECTED));
+
+                _wifiSSID = wifiSSID;
+                _wifiKey = wifiKey;
+                _hostName = hostName;
 
                 WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE);
                 WiFi.setHostname(_hostName.c_str());
@@ -45,7 +50,7 @@ namespace esp32
             while (!Connected() && t > 0)
             {
                 const uint32_t waitTime = std::min(10u, t);
-                vTaskDelay(waitTime / portTICK_PERIOD_MS);
+                vTaskDelay(waitTime);
                 t -= waitTime;
             }
 
