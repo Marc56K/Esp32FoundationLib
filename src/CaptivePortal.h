@@ -11,7 +11,7 @@ namespace esp32
         class CaptivePortal
         {
         public:
-            CaptivePortal();
+            CaptivePortal(const char* ip = "192.168.3.1");
             ~CaptivePortal();
 
             void On(
@@ -32,6 +32,7 @@ namespace esp32
             void HandleNotFound();
 
         private:
+            IPAddress _apIP;
             DNSServer _dnsServer;
             WebServer _httpServer;
             bool _isStopped;

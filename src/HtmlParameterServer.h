@@ -10,7 +10,9 @@ namespace esp32
         class HtmlParameterServer : public CaptivePortal
         {
         public:
-            HtmlParameterServer(ParameterSet& paramSet = DefaultParameterSet);
+            HtmlParameterServer(
+                const char* ip = "192.168.3.1",
+                ParameterSet& paramSet = DefaultParameterSet);
             ~HtmlParameterServer();
 
         private:

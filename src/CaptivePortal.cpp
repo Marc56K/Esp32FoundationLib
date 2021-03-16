@@ -8,23 +8,25 @@
 #define GPIO_OUT_W1TS_REG (DR_REG_GPIO_BASE + 0x0008)
 #define GPIO_OUT_W1TC_REG (DR_REG_GPIO_BASE + 0x000c)
 
-IPAddress apIP(192, 168, 3, 1);
 IPAddress netMsk(255, 255, 255, 0);
 
 namespace esp32
 {
     namespace foundation
     {
-        CaptivePortal::CaptivePortal()
+        CaptivePortal::CaptivePortal(const char* ip)
             : _httpServer(80),
               _isStopped(true),
               _registerA(0),
               _registerB(0),
               _registerC(0)
         {
-            _callbacks["/"] = [](WebServer& httpServer)
+            _apIP.fromString(ip);
+            _callbacks["/"] = [](WebServer& sv)
             {
-                httpServer.sendContent("CaptivePortal not configured!");
+                sv.setContentLength(CONTENT_LENGTH_UNKNOWN);
+                sv.sendContent("CaptivePortal not configured!");
+                sv.client().stop();
             };
         }
 
@@ -70,9 +72,9 @@ namespace esp32
             else
             {
                 delay(2000);
-                WiFi.softAPConfig(apIP, apIP, netMsk);
+                WiFi.softAPConfig(_apIP, _apIP, netMsk);
                 _dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
-                _dnsServer.start(DNS_PORT, "*", apIP);
+                _dnsServer.start(DNS_PORT, "*", _apIP);
             }
 
             // init http server
@@ -141,12 +143,18 @@ namespace esp32
                 return true;
             };
 
-            if (!isIp(_httpServer.hostHeader()) && _httpServer.hostHeader() != (_hostName + ".local"))
+            if (_httpServer.hostHeader() == _apIP.toString())
+            {
+                // prevent nested redirects
+                _httpServer.send(304, "text/plain", "");
+                _httpServer.client().stop();   
+            }
+            else if (!isIp(_httpServer.hostHeader()) && _httpServer.hostHeader() != (_hostName + ".local"))
             {
                 const String url = String("http://") + _httpServer.client().localIP().toString();
                 _httpServer.sendHeader("Location", url, true);
-                _httpServer.send(302, "text/plain", ""); // Empty content inhibits Content-length header so we have to close the socket ourselves.
-                _httpServer.client().stop();             // Stop is needed because we sent no content length
+                _httpServer.send(302, "text/plain", "");
+                _httpServer.client().stop();
             }
         }
     }

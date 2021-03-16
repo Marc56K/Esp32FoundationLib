@@ -4,19 +4,21 @@ namespace esp32
 {
     namespace foundation
     {
-        HtmlParameterServer::HtmlParameterServer(ParameterSet &paramSet)
-            : _paramSet(paramSet)
+        HtmlParameterServer::HtmlParameterServer(const char* ip, ParameterSet &paramSet)
+            : CaptivePortal(ip), _paramSet(paramSet)
         {
             On("/", [&](WebServer &sv)
             {
                 sv.setContentLength(CONTENT_LENGTH_UNKNOWN);
                 sv.send(200, "text/html", "");
                 sv.sendContent("<!DOCTYPE HTML><html lang=\"de\"><head><meta charset=\"UTF-8\"><meta name= viewport content=\"width=device-width, initial-scale=1.0,\">");
-                sv.sendContent("<head><title></title>");
+                sv.sendContent("<head>");
 
                 sv.sendContent("<style>");
                 sv.sendContent_P(bootstrap_css);
+                sv.sendContent("@media screen and (min-width: 600px) { body form { width: 600px; margin: 0 auto; }}");
                 sv.sendContent("</style>");
+
                 sv.sendContent("</head><body style=\"padding: 5px;\">");
                 sv.sendContent("<form action=\"/save\" method=\"post\">");
 
@@ -54,6 +56,8 @@ namespace esp32
                 sv.setContentLength(CONTENT_LENGTH_UNKNOWN);
                 sv.send(200, "text/html", "configuration completed");
                 sv.client().stop();
+
+                delay(2000);
 
                 Stop();
             });
