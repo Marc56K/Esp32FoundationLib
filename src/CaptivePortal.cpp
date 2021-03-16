@@ -25,6 +25,7 @@ namespace esp32
             _callbacks["/"] = [](WebServer& sv)
             {
                 sv.setContentLength(CONTENT_LENGTH_UNKNOWN);
+                sv.send(200, "text/html", "");
                 sv.sendContent("CaptivePortal not configured!");
                 sv.client().stop();
             };

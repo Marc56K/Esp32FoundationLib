@@ -11,7 +11,7 @@ namespace esp32
             {
                 sv.setContentLength(CONTENT_LENGTH_UNKNOWN);
                 sv.send(200, "text/html", "");
-                sv.sendContent("<!DOCTYPE HTML><html lang=\"de\"><head><meta charset=\"UTF-8\"><meta name= viewport content=\"width=device-width, initial-scale=1.0,\">");
+                sv.sendContent("<!DOCTYPE HTML><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0,\">");
                 sv.sendContent("<head>");
 
                 sv.sendContent("<style>");
@@ -54,7 +54,34 @@ namespace esp32
                 _paramSet.SaveToEEPROM();
 
                 sv.setContentLength(CONTENT_LENGTH_UNKNOWN);
-                sv.send(200, "text/html", "configuration completed");
+                sv.send(200, "text/html", "");
+                static const String s =
+                    "<!DOCTYPE html>\n"
+                    "<html>\n"
+                    "<head>\n"
+                    "<meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0,\">\n"
+                    "<style>\n"
+                    "html, body {\n"
+                    "\theight: 100%;\n"
+                    "    margin: 0;\n"
+                    "}\n"
+                    ".container {\n"
+                    "  display: flex;\n"
+                    "  height: 70%;\n"
+                    "  justify-content: center;\n"
+                    "  align-items: center;\n"
+                    "  text-align: center;\n"
+                    "}\n"
+                    "\n"
+                    "</style>\n"
+                    "</head>\n"
+                    "<body>\n"
+                    "<div class=\"container\">\n"
+                    "  Configuration Completed! \n"
+                    "</div>\n"
+                    "</body>\n"
+                    "</html>";
+                sv.sendContent(s);
                 sv.client().stop();
 
                 delay(2000);
