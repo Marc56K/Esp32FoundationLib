@@ -71,5 +71,19 @@ namespace esp32
         {
             return WiFi.isConnected();
         }
+
+        std::vector<String> WiFiSmartClient::ScanNetworks()
+        {
+            WiFi.scanDelete();
+            const int16_t numWifis = WiFi.scanNetworks(false, false);
+            std::vector<String> result;
+            result.reserve(numWifis);
+            for (int16_t i = 0; i < numWifis; i++)
+            {
+                result.push_back(WiFi.SSID(i));        
+            }
+            std::sort(result.begin(), result.end());
+            return result;
+        }
     }
 }

@@ -21,6 +21,8 @@ namespace esp32
             void Disconnect();
             bool Connected();
 
+            std::vector<String> ScanNetworks();
+
         private:
             String _wifiSSID;
             String _wifiKey;
