@@ -70,7 +70,7 @@ namespace esp32
             String result;
             result += "<div class=\"form-group\">";
             result += "<label for=\"" + _id + "\">" + _id + "</label>";
-            result += "<input class=\"form-control\" type=\"number\" id=\"" + _id + "\" name=\"" + _id + "\" ";
+            result += "<input class=\"form-control\" type=\"number\" step=\"any\" id=\"" + _id + "\" name=\"" + _id + "\" ";
             result += "value=\"" + HtmlSpecialChars(value) + "\" ";
             result += "min=\"" + HtmlSpecialChars(minValue) + "\" ";
             result += "max=\"" + HtmlSpecialChars(maxValue) + "\">";
@@ -93,7 +93,7 @@ namespace esp32
             case ParameterType::PT_FLOAT:
             {
                 auto fp = (FloatParameter *)&p;
-                s = NumberInputField(p.Name, label, p.ToString(), String(fp->MinValue), String(fp->MaxValue));
+                s = NumberInputField(p.Name, label, p.ToString(), String(fp->MinValue, fp->DecimalPlaces), String(fp->MaxValue, fp->DecimalPlaces));
             }
             break;
             case ParameterType::PT_INTEGER:

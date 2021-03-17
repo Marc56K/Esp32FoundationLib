@@ -1,5 +1,6 @@
 #include "HtmlParameterServer.h"
-
+#include "html/ConfigCompleted.html"
+#include "html/ConfigCanceled.html"
 namespace esp32
 {
     namespace foundation
@@ -11,16 +12,17 @@ namespace esp32
             {
                 sv.setContentLength(CONTENT_LENGTH_UNKNOWN);
                 sv.send(200, "text/html", "");
-                sv.sendContent("<!DOCTYPE HTML><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0,\">");
-                sv.sendContent("<head>");
+                sv.sendContent(R"(<!DOCTYPE HTML><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0,">)");
+                sv.sendContent(R"(<head>)");
 
-                sv.sendContent("<style>");
+                sv.sendContent(R"(<style>)");
                 sv.sendContent_P(bootstrap_css);
-                sv.sendContent("@media screen and (min-width: 600px) { body form { width: 600px; margin: 0 auto; }}");
-                sv.sendContent("</style>");
+                sv.sendContent(R"(@media screen and (min-width: 500px) { body form { width: 500px; margin: 0 auto; }} )");
+                sv.sendContent(R"(button { margin-left: 10px; width: 100px } )");
+                sv.sendContent(R"(</style>)");
 
-                sv.sendContent("</head><body style=\"padding: 5px;\">");
-                sv.sendContent("<form action=\"/save\" method=\"post\">");
+                sv.sendContent(R"(</head><body style="padding: 5px">)");
+                sv.sendContent(R"(<form action="/apply" method="post">)");
 
                 for (auto &param : _paramSet.GetParameters())
                 {
@@ -31,16 +33,30 @@ namespace esp32
                         sv.sendContent(s);
                     }
                 }
-
-                sv.sendContent("<button type=\"submit\" class=\"btn btn-primary\">Save</button>");
-                sv.sendContent("</form>");
-                sv.sendContent("</body></html>");
+                
+                sv.sendContent(R"(<div style="display: flex; justify-content: flex-end">)");
+                sv.sendContent(R"(<button type="button" class="btn btn-danger" onclick="window.location.href = './cancel'">Cancel</button>)");
+                sv.sendContent(R"(<button type="submit" class="btn btn-success">Apply</button>)");
+                sv.sendContent(R"(</div>)");
+                sv.sendContent(R"(</form>)");
+                sv.sendContent(R"(</body></html>)");
 
                 // Stop is needed because we sent no content length
                 sv.client().stop();
             });
 
-            On("/save", [&](WebServer &sv)
+            On("/cancel", [&](WebServer &sv)
+            {
+                sv.setContentLength(CONTENT_LENGTH_UNKNOWN);
+                sv.send(200, "text/html", "");                
+                sv.sendContent(ConfigCanceledHtml);
+                sv.client().stop();
+
+                delay(2000);
+                Stop();
+            });
+
+            On("/apply", [&](WebServer &sv)
             {
                 for (auto &param : _paramSet.GetParameters())
                 {
@@ -54,38 +70,11 @@ namespace esp32
                 _paramSet.SaveToEEPROM();
 
                 sv.setContentLength(CONTENT_LENGTH_UNKNOWN);
-                sv.send(200, "text/html", "");
-                static const String s =
-                    "<!DOCTYPE html>\n"
-                    "<html>\n"
-                    "<head>\n"
-                    "<meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0,\">\n"
-                    "<style>\n"
-                    "html, body {\n"
-                    "\theight: 100%;\n"
-                    "    margin: 0;\n"
-                    "}\n"
-                    ".container {\n"
-                    "  display: flex;\n"
-                    "  height: 70%;\n"
-                    "  justify-content: center;\n"
-                    "  align-items: center;\n"
-                    "  text-align: center;\n"
-                    "}\n"
-                    "\n"
-                    "</style>\n"
-                    "</head>\n"
-                    "<body>\n"
-                    "<div class=\"container\">\n"
-                    "  Configuration Completed! \n"
-                    "</div>\n"
-                    "</body>\n"
-                    "</html>";
-                sv.sendContent(s);
+                sv.send(200, "text/html", "");                
+                sv.sendContent(ConfigCompletedHtml);
                 sv.client().stop();
 
                 delay(2000);
-
                 Stop();
             });
         }
