@@ -24,7 +24,7 @@ namespace esp32
             Parameter *GetParameter(const String &name) const;
             const std::map<String, Parameter *> &GetParameters() const;
 
-            void PrintParameters(HardwareSerial& serial) const;
+            void PrintParameters(HardwareSerial& serial, const bool hiddenParams = false) const;
 
         private:
             std::map<String, Parameter *> _params;
@@ -49,6 +49,9 @@ namespace esp32
             virtual ~Parameter();
             virtual void SetFromString(const String& value) = 0;
             virtual String ToString() = 0;
+
+            bool IsHidden() const;
+            String GetDisplayName() const;
 
         protected:
             int32_t _keyId;

@@ -19,21 +19,28 @@ namespace esp32
                 sv.sendContent_P(bootstrap_css);
                 sv.sendContent(R"(@media screen and (min-width: 500px) { body form { width: 500px; margin: 0 auto; }} )");
                 sv.sendContent(R"(button { margin-left: 10px; width: 100px } )");
+                sv.sendContent(R"(form { background: rgb(250, 250, 250); padding: 20px 10px; border-radius: 10px; } )");
                 sv.sendContent(R"(</style>)");
 
-                sv.sendContent(R"(</head><body style="padding: 5px">)");
+                sv.sendContent(R"(</head><body>)");
+                sv.sendContent("\n");
                 sv.sendContent(R"(<form action="/apply" method="post">)");
 
                 for (auto &param : _paramSet.GetParameters())
                 {
-                    String s = HtmlTemplates::ParameterInputField(*param.second, param.second->Name);
-
-                    if (!s.isEmpty())
+                    if (!param.second->IsHidden())
                     {
-                        sv.sendContent(s);
+                        const String s = HtmlTemplates::ParameterInputField(*param.second, param.second->GetDisplayName());
+
+                        if (!s.isEmpty())
+                        {
+                            sv.sendContent("\n");
+                            sv.sendContent(s);
+                            sv.sendContent("<hr>");
+                        }
                     }
                 }
-                
+                sv.sendContent("\n");
                 sv.sendContent(R"(<div style="display: flex; justify-content: flex-end">)");
                 sv.sendContent(R"(<button type="button" class="btn btn-danger" onclick="window.location.href = './cancel'">Cancel</button>)");
                 sv.sendContent(R"(<button type="submit" class="btn btn-success">Apply</button>)");
@@ -47,6 +54,8 @@ namespace esp32
 
             On("/cancel", [&](WebServer &sv)
             {
+                Serial.println("### cancel");
+
                 sv.setContentLength(CONTENT_LENGTH_UNKNOWN);
                 sv.send(200, "text/html", "");                
                 sv.sendContent(ConfigCanceledHtml);
@@ -58,12 +67,19 @@ namespace esp32
 
             On("/apply", [&](WebServer &sv)
             {
+                std::map<String, String> postParams;
+                for (int i = 0; i < sv.args(); i++)
+                {
+                    // takes the last version of each post-parameter
+                    postParams[sv.argName(i)] = sv.arg(i);
+                }
+
                 for (auto &param : _paramSet.GetParameters())
                 {
-                    if (sv.hasArg(param.first))
+                    auto it = postParams.find(param.first);
+                    if (it != postParams.end())
                     {
-                        auto value = sv.arg(param.first);
-                        param.second->SetFromString(value);
+                        param.second->SetFromString(it->second);
                     }
                 }
 

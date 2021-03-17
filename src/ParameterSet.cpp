@@ -57,13 +57,16 @@ namespace esp32
             return _params;
         }
 
-        void ParameterSet::PrintParameters(HardwareSerial& serial) const
+        void ParameterSet::PrintParameters(HardwareSerial& serial, const bool ignoreHiddenParams) const
         {
             for (auto& param : _params)
             {
-                serial.print(param.first);
-                serial.print(" = ");
-                serial.println(param.second->ToString());
+                if (!ignoreHiddenParams || !param.second->IsHidden())
+                {
+                    serial.print(param.first);
+                    serial.print(" = ");
+                    serial.println(param.second->ToString());
+                }
             }
         }
 
@@ -88,6 +91,33 @@ namespace esp32
         Parameter::~Parameter()
         {
             ParamSet.Unregister(*this);
+        }
+
+        bool Parameter::IsHidden() const
+        {
+            return Name.startsWith(".");
+        }
+
+        String Parameter::GetDisplayName() const
+        {
+            String result;
+            for (uint32_t i = 0; i < Name.length(); i++)
+            {
+                if (i == 0)
+                {
+                    result += (char)std::toupper(Name[i]);
+                }
+                else
+                {
+                    if (std::islower(Name[i - 1]) && std::isupper(Name[i]))
+                    {
+                        result += " ";
+                    }
+                    result += Name[i];
+                }
+            }
+
+            return result;
         }
 
         /*******************/

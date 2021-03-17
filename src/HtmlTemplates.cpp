@@ -48,14 +48,16 @@ namespace esp32
         {
             const String _id = HtmlSpecialChars(id);
             String result;
-            result += "<div class=\"form-group\">";
-            result += "<label for=\"" + _id + "\">" + HtmlSpecialChars(label) + "</label>";
-            result += "<input class=\"form-control\" type=\"checkbox\" id=\"" + _id + "\" name=\"" + _id + "\" ";
+            result += R"(<div class="form-check" style="margin-bottom: 10px">)";
+            result += R"(<input type="hidden" value="false" name=")" + _id + R"(">)";
+            result += R"(<input class="form-check-input" type="checkbox" value="true" id=")" + _id + R"(" name=")" + _id + R"(" )";
             if (checked)
             {
                 result += "checked";
             }
-            result += "></div>";
+            result += R"(>)";
+            result += R"(<label class="form-check-label" for=")" + _id + R"(">)" + HtmlSpecialChars(label) + R"(</label>)";
+            result += R"(</div>)";
             return result;
         }
 
@@ -69,12 +71,17 @@ namespace esp32
             const String _id = HtmlSpecialChars(id);
             String result;
             result += "<div class=\"form-group\">";
-            result += "<label for=\"" + _id + "\">" + _id + "</label>";
+            result += "<label for=\"" + _id + "\">" + HtmlSpecialChars(label) + "</label>";
             result += "<input class=\"form-control\" type=\"number\" step=\"any\" id=\"" + _id + "\" name=\"" + _id + "\" ";
-            result += "value=\"" + HtmlSpecialChars(value) + "\" ";
-            result += "min=\"" + HtmlSpecialChars(minValue) + "\" ";
-            result += "max=\"" + HtmlSpecialChars(maxValue) + "\">";
-            result += "</div>";
+            result += "value=\"" + HtmlSpecialChars(value) + "\"";
+
+            if (!minValue.isEmpty())
+                result += " min=\"" + HtmlSpecialChars(minValue) + "\"";
+            
+            if (!maxValue.isEmpty())
+                result += " max=\"" + HtmlSpecialChars(maxValue) + "\"";
+
+            result += "></div>";
             return result;
         }
 
@@ -93,7 +100,9 @@ namespace esp32
             case ParameterType::PT_FLOAT:
             {
                 auto fp = (FloatParameter *)&p;
-                s = NumberInputField(p.Name, label, p.ToString(), String(fp->MinValue, fp->DecimalPlaces), String(fp->MaxValue, fp->DecimalPlaces));
+                const String minVal = fp->MinValue < -9999999.0f ? String("") : String(fp->MinValue, fp->DecimalPlaces);
+                const String maxVal = fp->MaxValue >  9999999.0f ? String("") : String(fp->MaxValue, fp->DecimalPlaces);
+                s = NumberInputField(p.Name, label, p.ToString(), minVal, maxVal);
             }
             break;
             case ParameterType::PT_INTEGER:
