@@ -1,11 +1,11 @@
-#include "HtmlParameterServer.h"
+#include "HtmlConfigurator.h"
 #include "html/ConfigCompleted.html"
 #include "html/ConfigCanceled.html"
 namespace esp32
 {
     namespace foundation
     {
-        HtmlParameterServer::HtmlParameterServer(const char* ip, ParameterSet &paramSet)
+        HtmlConfigurator::HtmlConfigurator(const char* ip, ParameterSet &paramSet)
             : CaptivePortal(ip), _paramSet(paramSet)
         {
             On("/", [&](WebServer &sv)
@@ -54,8 +54,6 @@ namespace esp32
 
             On("/cancel", [&](WebServer &sv)
             {
-                Serial.println("### cancel");
-
                 sv.setContentLength(CONTENT_LENGTH_UNKNOWN);
                 sv.send(200, "text/html", "");                
                 sv.sendContent(ConfigCanceledHtml);
@@ -95,7 +93,7 @@ namespace esp32
             });
         }
 
-        HtmlParameterServer::~HtmlParameterServer()
+        HtmlConfigurator::~HtmlConfigurator()
         {
         }
     }

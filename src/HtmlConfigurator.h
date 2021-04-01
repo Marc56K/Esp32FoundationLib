@@ -7,13 +7,13 @@ namespace esp32
 {
     namespace foundation
     {
-        class HtmlParameterServer : public CaptivePortal
+        class HtmlConfigurator : public CaptivePortal
         {
         public:
-            HtmlParameterServer(
+            HtmlConfigurator(
                 const char* ip = "192.168.3.1",
                 ParameterSet& paramSet = DefaultParameterSet);
-            ~HtmlParameterServer();
+            ~HtmlConfigurator();
 
         private:
             ParameterSet& _paramSet;

@@ -103,9 +103,13 @@ namespace esp32
             String result;
             for (uint32_t i = 0; i < Name.length(); i++)
             {
-                if (i == 0)
+                if (i == 0 || Name[i - 1] == '_')
                 {
                     result += (char)std::toupper(Name[i]);
+                }
+                else if (Name[i] == '_')
+                {
+                    result += " ";
                 }
                 else
                 {

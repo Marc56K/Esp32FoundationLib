@@ -4,5 +4,5 @@
 #include "SerialCLI.h"
 #include "StringUtils.h"
 #include "CaptivePortal.h"
-#include "HtmlParameterServer.h"
+#include "HtmlConfigurator.h"
 #include "WiFiSmartClient.h"
