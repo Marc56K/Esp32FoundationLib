@@ -134,6 +134,11 @@ USAGE:
   save       : Save configuration to EEPROM.
   set        : Set parameter.
 *************************************************************
+Example:
+> set wifi_ssid BlaBlub
+done
+> save
+done
 ```
 
 ## Create a WiFi-hotspot to configure your ESP32 with your smartphone.
