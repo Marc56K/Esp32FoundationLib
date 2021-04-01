@@ -13,6 +13,10 @@ namespace esp32
                 const String &delimiter,
                 String &key,
                 String &value);
+
+            static String PrependZeros(
+                const String& input,
+                const int totalLength);
         };
     }
 }

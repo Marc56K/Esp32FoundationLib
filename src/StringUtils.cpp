@@ -19,5 +19,15 @@ namespace esp32
             value = "";
             return false;
         }
+
+        String StringUtils::PrependZeros(const String& input, const int totalLength)
+        {
+            String result = input;
+            while (result.length() < totalLength)
+            {
+                result = "0" + result;
+            }
+            return result;
+        }
     }
 }
