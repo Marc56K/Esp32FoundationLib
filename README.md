@@ -1,4 +1,8 @@
 # Esp32FoundationLib
+- [Loading and storing of parameters from EEPROM.](#loading-and-storing-of-parameters-from-eeprom)
+- [Configure your ESP via serial interface.](#configure-your-esp-via-serial-interface)
+- [Create a WiFi-hotspot to configure your ESP32 with your smartphone.](#create-a-wifi-hotspot-to-configure-your-esp32-with-your-smartphone)
+- [A WiFi client with auto-reconnect and configurable hostname.](#a-wifi-client-with-auto-reconnect-and-configurable-hostname)
 
 ## Loading and storing of parameters from EEPROM.
 ```cpp
@@ -63,7 +67,7 @@ StringParameter wifiSsid(
 
 StringParameter wifiKey(
     "wifi_key",   // parameter name
-    "TopSecret"); // default value
+    "topsecret"); // default value
 
 void setup()
 {
@@ -176,3 +180,37 @@ void loop()
 }
 ```
 ![HtmlConfigurator](examples/HtmlConfiguratorExample/HtmlConfigurator.jpg "")
+
+## A WiFi client with auto-reconnect and configurable hostname.
+```cpp
+#include <Arduino.h>
+#include <Esp32Foundation.h>
+
+using namespace esp32::foundation;
+
+WiFiSmartClient wifiClient;
+
+StringParameter wifiSsid("wifi_ssid", "MyWifi");
+StringParameter wifiKey("wifi_key", "topsecret");
+StringParameter hostname("hostname", "MyEsp");
+
+void setup()
+{
+    Serial.begin(9600);
+
+    wifiClient.Connect(wifiSsid, wifiKey, hostname, 0);
+}
+
+void loop()
+{
+    if (wifiClient.Connected())
+    {
+        Serial.println("online");
+    }
+    else
+    {
+        Serial.println("offline");
+    }
+    delay(1000);
+}
+```
