@@ -229,7 +229,7 @@ On startup it tries to connect to wifi for five seconds. If this fails, it start
 
 using namespace esp32::foundation;
 
-HtmlConfigurator* configurator = nullptr;
+HtmlConfigurator configurator;
 WiFiSmartClient wifiClient;
 
 StringParameter wifiSsid("wifi_ssid", "MyWifi");
@@ -248,37 +248,35 @@ void setup()
         // stop auto-reconnect
         wifiClient.Disconnect();
 
+        // register callbacks
+        configurator.OnCancel([&]()
+        {
+            Serial.println("Configuration aborted!");
+            configurator.Stop();
+        });
+        configurator.OnApply([&](ParameterSet& params)
+        {
+            Serial.println("Configuration completed!");
+            params.SaveToEEPROM();
+            configurator.Stop();
+
+            ESP.restart();
+        });
+
         // start wifi-hotspot
-        configurator = new HtmlConfigurator();
-        if (configurator->Start("EspSetup", "test1234", hostname))
+        if (configurator.Start("EspSetup", "test1234", hostname))
         {
             Serial.println("WiFi-Hotspot created");
-        }
-        else
-        {
-            delete configurator;
-            configurator = nullptr;
-            Serial.println("Can't create WiFi-Hotspot!");
         }
     }
 }
 
 void loop()
 {
-    if (configurator != nullptr)
-    {
-        if (configurator->IsStopped())
-        {
-            Serial.println("Configuration done!");
-            delete configurator;
-            configurator = nullptr;
-            wifiClient.Connect(wifiSsid, wifiKey, hostname, 0);
-        }
-        else
-        {
-            configurator->Update();
-        }
-    }
+    configurator.Update();
+
+    // add your code here ...
+
     delay(1000);
 }
 ```
