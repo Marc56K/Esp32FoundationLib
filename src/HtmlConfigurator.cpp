@@ -8,8 +8,16 @@ namespace esp32
         HtmlConfigurator::HtmlConfigurator(const char* ip, ParameterSet &paramSet)
             : CaptivePortal(ip), _paramSet(paramSet)
         {
-            _onCancel = [&]() { Stop(); };
-            _onApply = [&](ParameterSet&) { Stop(); };
+            _onCancel = [&]()
+            {
+                Stop();
+            };
+
+            _onApply = [&](ParameterSet& ps)
+            {
+                ps.SaveToEEPROM();
+                Stop();
+            };
 
             On("/", [&](WebServer &sv)
             {
@@ -83,8 +91,6 @@ namespace esp32
                         param.second->SetFromString(it->second);
                     }
                 }
-
-                _paramSet.SaveToEEPROM();
 
                 sv.setContentLength(CONTENT_LENGTH_UNKNOWN);
                 sv.send(200, "text/html", "");                
