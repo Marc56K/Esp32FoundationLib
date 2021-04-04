@@ -8,6 +8,9 @@ namespace esp32
         HtmlConfigurator::HtmlConfigurator(const char* ip, ParameterSet &paramSet)
             : CaptivePortal(ip), _paramSet(paramSet)
         {
+            _onCancel = [&]() { Stop(); };
+            _onApply = [&](ParameterSet&) { Stop(); };
+
             On("/", [&](WebServer &sv)
             {
                 sv.setContentLength(CONTENT_LENGTH_UNKNOWN);
@@ -60,7 +63,7 @@ namespace esp32
                 sv.client().stop();
 
                 delay(2000);
-                Stop();
+                _onCancel();
             });
 
             On("/apply", [&](WebServer &sv)
@@ -89,12 +92,22 @@ namespace esp32
                 sv.client().stop();
 
                 delay(2000);
-                Stop();
+                _onApply(_paramSet);
             });
         }
 
         HtmlConfigurator::~HtmlConfigurator()
         {
+        }
+
+        void HtmlConfigurator::OnCancel(std::function<void(void)> callback)
+        {
+            _onCancel = callback;
+        }
+
+        void HtmlConfigurator::OnApply(std::function<void(ParameterSet&)> callback)
+        {
+            _onApply = callback;
         }
     }
 }
