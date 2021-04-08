@@ -15,7 +15,7 @@ namespace esp32
 
             _onApply = [&](ParameterSet& ps)
             {
-                ps.SaveToEEPROM();
+                ps.Save();
                 Stop();
             };
 

@@ -4,10 +4,8 @@ namespace esp32
 {
     namespace foundation
     {
-        ParameterSet::ParameterSet(
-            EEPROMClass &eeprom,
-            const uint32_t eepromSize)
-            : KeyValueStorage(eeprom, eepromSize)
+        ParameterSet::ParameterSet(const String& name)
+            : KeyValueStorage(name)
         {
         }
 
@@ -15,7 +13,7 @@ namespace esp32
         {
         }
 
-        void ParameterSet::SaveToEEPROM()
+        void ParameterSet::Save()
         {
             std::vector<String> garbage;
             for (auto &key : _keys)
@@ -29,7 +27,7 @@ namespace esp32
             {
                 Unset(name);
             }
-            KeyValueStorage::SaveToEEPROM();
+            KeyValueStorage::Save();
         }
 
         void ParameterSet::Register(Parameter &parameter)
@@ -70,7 +68,7 @@ namespace esp32
             }
         }
 
-        ParameterSet DefaultParameterSet;
+        ParameterSet DefaultParameterSet("params");
 
         /*************/
         /* Parameter */
@@ -140,7 +138,7 @@ namespace esp32
 
         StringParameter::operator String()
         {
-            ParamSet.LoadFromEEPROM();
+            ParamSet.Load();
 
             if (_keyId < 0)
                 _keyId = ParamSet.GetKeyId(Name);
@@ -155,7 +153,7 @@ namespace esp32
 
         StringParameter &StringParameter::operator=(const String &value)
         {
-            ParamSet.LoadFromEEPROM();
+            ParamSet.Load();
 
             if (_keyId < 0)
             {
@@ -184,7 +182,7 @@ namespace esp32
 
         FloatParameter::operator float()
         {
-            ParamSet.LoadFromEEPROM();
+            ParamSet.Load();
 
             if (_keyId < 0)
                 _keyId = ParamSet.GetKeyId(Name);
@@ -200,7 +198,7 @@ namespace esp32
 
         FloatParameter &FloatParameter::operator=(const float value)
         {
-            ParamSet.LoadFromEEPROM();
+            ParamSet.Load();
 
             const auto val = constrain(value, MinValue, MaxValue);
             if (_keyId < 0)
@@ -230,7 +228,7 @@ namespace esp32
 
         IntegerParameter::operator int32_t()
         {
-            ParamSet.LoadFromEEPROM();
+            ParamSet.Load();
 
             if (_keyId < 0)
                 _keyId = ParamSet.GetKeyId(Name);
@@ -246,7 +244,7 @@ namespace esp32
 
         IntegerParameter &IntegerParameter::operator=(const int32_t value)
         {
-            ParamSet.LoadFromEEPROM();
+            ParamSet.Load();
 
             const auto val = constrain(value, MinValue, MaxValue);
             if (_keyId < 0)
@@ -293,7 +291,7 @@ namespace esp32
 
         BooleanParameter::operator bool()
         {
-            ParamSet.LoadFromEEPROM();
+            ParamSet.Load();
 
             if (_keyId < 0)
                 _keyId = ParamSet.GetKeyId(Name);
@@ -309,7 +307,7 @@ namespace esp32
 
         BooleanParameter &BooleanParameter::operator=(const bool value)
         {
-            ParamSet.LoadFromEEPROM();
+            ParamSet.Load();
 
             if (_keyId < 0)
             {

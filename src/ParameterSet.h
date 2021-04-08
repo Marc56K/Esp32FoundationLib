@@ -11,12 +11,10 @@ namespace esp32
         class ParameterSet : public KeyValueStorage
         {
         public:
-            ParameterSet(
-                EEPROMClass &eeprom = EEPROM,
-                const uint32_t eepromSize = 512);
+            ParameterSet(const String& name);
             virtual ~ParameterSet();
 
-            virtual void SaveToEEPROM() override;
+            virtual void Save() override;
 
             void Register(Parameter &parameter);
             void Unregister(Parameter &parameter);

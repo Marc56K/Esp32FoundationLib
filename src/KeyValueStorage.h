@@ -3,6 +3,7 @@
 #include <EEPROM.h>
 #include <map>
 #include <vector>
+#include <Preferences.h>
 
 namespace esp32
 {
@@ -11,12 +12,6 @@ namespace esp32
         class KeyValueStorage
         {
         protected:
-            struct StorageHeader
-            {           
-                uint32_t totalSize;
-                uint32_t hash;
-            };
-
             struct EntryHeader
             {
                 uint32_t keySize;
@@ -24,15 +19,13 @@ namespace esp32
             };
 
         public:
-            KeyValueStorage(
-                EEPROMClass &eeprom = EEPROM,
-                const uint32_t eepromSize = 512);
+            KeyValueStorage(const String& name);
 
             virtual ~KeyValueStorage();
             
-            virtual bool LoadFromEEPROM();
-            virtual uint32_t ReloadFromEEPROM();
-            virtual void SaveToEEPROM();
+            virtual bool Load();
+            virtual uint32_t Reload();
+            virtual void Save();
             virtual void Clear();
             bool IsModified();
             bool IsLoaded();
@@ -88,8 +81,8 @@ namespace esp32
             uint32_t ComputeHash(const void *storage) const;
 
         protected:
-            EEPROMClass &_eeprom;
-            uint32_t _eepromSize;
+            String _name;
+            Preferences _pref;
             bool _isLoaded;
             bool _isModified;
             int32_t _maxKeyId;
